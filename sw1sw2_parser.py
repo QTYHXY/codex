@@ -99,6 +99,19 @@ def parse_status(sw: str) -> Meaning:
     return Meaning("Unknown", "Status word not in current ISO 7816 quick map (may be proprietary).")
 
 
+def parse_input(argv: list[str]) -> str:
+    if len(argv) >= 3:
+        return "".join(argv[1:3])
+    if len(argv) == 2:
+        return argv[1]
+    if not sys.stdin.isatty():
+        return sys.stdin.read().strip()
+    raise ValueError("Usage: python sw1sw2_parser.py <SW1SW2> OR <SW1> <SW2>")
+
+
+def main(argv: list[str]) -> int:
+    try:
+        raw = parse_input(argv)
 def main(argv: list[str]) -> int:
     if len(argv) < 2:
         print("Usage: python sw1sw2_parser.py <SW1SW2>  OR  python sw1sw2_parser.py <SW1> <SW2>")
