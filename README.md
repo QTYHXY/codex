@@ -11,13 +11,14 @@ python sw1sw2_parser.py 63 C3
 echo 63C1 | python sw1sw2_parser.py
 ```
 
-## Desktop UI (Tkinter)
+## Desktop UI（基于 Python 标准库 Tkinter）
 
 ```bash
 python tkinter_ui.py
 ```
 
 UI features:
+- Directly built with Python standard library `tkinter` (no browser framework needed).
 - A modern dark-themed desktop window.
 - Input accepts `9000`, `6A82`, `63 C2`, `0x6A 0x82`.
 - Press Enter or click **解析** to decode.

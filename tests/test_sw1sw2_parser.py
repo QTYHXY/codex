@@ -1,6 +1,6 @@
 import unittest
 
-from sw1sw2_parser import Meaning, normalize, parse_status
+from sw1sw2_parser import Meaning, decode_sw1sw2, normalize, parse_status
 
 
 class SwParserTests(unittest.TestCase):
@@ -19,6 +19,11 @@ class SwParserTests(unittest.TestCase):
     def test_6c_pattern(self):
         meaning = parse_status("6C10")
         self.assertIn("Correct Le is 16", meaning.description)
+
+    def test_decode_helper(self):
+        sw, meaning = decode_sw1sw2("0x6A 0x82")
+        self.assertEqual(sw, "6A82")
+        self.assertEqual(meaning.description, "File or application not found.")
 
     def test_unknown(self):
         self.assertEqual(parse_status("1234").category, "Unknown")

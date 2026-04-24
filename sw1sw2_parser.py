@@ -103,6 +103,12 @@ def parse_status(sw: str) -> Meaning:
     return Meaning("Unknown", "Status word not in current ISO 7816 quick map (may be proprietary).")
 
 
+
+def decode_sw1sw2(raw: str) -> tuple[str, Meaning]:
+    """Decode raw SW1/SW2 input and return normalized code + meaning."""
+    sw = normalize(raw)
+    return sw, parse_status(sw)
+
 def parse_input(argv: list[str]) -> str:
     if len(argv) >= 3:
         return "".join(argv[1:3])
@@ -116,8 +122,7 @@ def parse_input(argv: list[str]) -> str:
 def main(argv: list[str]) -> int:
     try:
         raw = parse_input(argv)
-        sw = normalize(raw)
-        meaning = parse_status(sw)
+        sw, meaning = decode_sw1sw2(raw)
     except ValueError as exc:
         print(f"Input error: {exc}")
         return 2

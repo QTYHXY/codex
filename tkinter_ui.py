@@ -6,7 +6,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 
-from sw1sw2_parser import normalize, parse_status
+from sw1sw2_parser import decode_sw1sw2
 
 
 class SwUi(tk.Tk):
@@ -89,8 +89,7 @@ class SwUi(tk.Tk):
             return
 
         try:
-            sw = normalize(raw)
-            meaning = parse_status(sw)
+            sw, meaning = decode_sw1sw2(raw)
         except ValueError as exc:
             self._set_result(f"输入错误：{exc}")
             return
