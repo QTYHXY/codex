@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""ISO/IEC 7816 SW1/SW2 parser.
+"""Quick ISO/IEC 7816 SW1/SW2 parser.
 
 Usage:
   python sw1sw2_parser.py 9000
   python sw1sw2_parser.py 6A82
   python sw1sw2_parser.py 63 C3
-  echo 63C1 | python sw1sw2_parser.py
 """
 
 from __future__ import annotations
@@ -21,16 +20,14 @@ class Meaning:
     description: str
 
 
-# Common status words defined by ISO/IEC 7816-4 plus practical additions.
+# Exact status words first.
 EXACT_MAP: dict[str, Meaning] = {
     "9000": Meaning("Normal processing", "Command successfully executed."),
-    "6200": Meaning("Warning", "State of non-volatile memory unchanged."),
     "6281": Meaning("Warning", "Part of returned data may be corrupted."),
     "6282": Meaning("Warning", "End of file/record reached before reading Le bytes."),
     "6283": Meaning("Warning", "Selected file invalidated."),
     "6284": Meaning("Warning", "FCI not formatted according to ISO 7816-4."),
-    "6300": Meaning("Warning", "State of non-volatile memory changed."),
-    "6400": Meaning("Execution error", "State of non-volatile memory unchanged."),
+    "6300": Meaning("Warning", "Authentication failed or state changed; retries may remain."),
     "6581": Meaning("Execution error", "Memory failure."),
     "6700": Meaning("Checking error", "Wrong length."),
     "6881": Meaning("Checking error", "Logical channel not supported."),
@@ -49,7 +46,7 @@ EXACT_MAP: dict[str, Meaning] = {
     "6A81": Meaning("Checking error", "Function not supported."),
     "6A82": Meaning("Checking error", "File or application not found."),
     "6A83": Meaning("Checking error", "Record not found."),
-    "6A84": Meaning("Checking error", "Not enough memory space."),
+    "6A84": Meaning("Checking error", "Not enough memory space in file."),
     "6A85": Meaning("Checking error", "Lc inconsistent with TLV structure."),
     "6A86": Meaning("Checking error", "Incorrect P1/P2 parameter."),
     "6A87": Meaning("Checking error", "Lc inconsistent with P1/P2."),
@@ -62,8 +59,7 @@ EXACT_MAP: dict[str, Meaning] = {
 
 
 def normalize(raw: str) -> str:
-    no_prefix = re.sub(r"0x", "", raw, flags=re.IGNORECASE)
-    cleaned = re.sub(r"[^0-9a-fA-F]", "", no_prefix).upper()
+    cleaned = re.sub(r"[^0-9a-fA-F]", "", raw).upper()
     if len(cleaned) != 4:
         raise ValueError("SW1SW2 must contain exactly 2 bytes (4 hex chars), e.g. 9000 or 6A82")
     return cleaned
@@ -93,12 +89,12 @@ def parse_status(sw: str) -> Meaning:
         return Meaning("Security error", "Security-related status (implementation-specific).")
     if sw1 == "67":
         return Meaning("Checking error", "Wrong length.")
-    if sw1 == "69":
-        return Meaning("Checking error", "Command not allowed / security condition not satisfied.")
-    if sw1 == "6A":
-        return Meaning("Checking error", "Wrong parameter(s) P1/P2 or data field issue.")
     if sw1 == "6C":
         return Meaning("Checking error", f"Wrong Le. Correct Le is {sw2} (0x{sw[2:]}).")
+    if sw1 == "6A":
+        return Meaning("Checking error", "Wrong parameter(s) P1/P2 or data field issue.")
+    if sw1 == "69":
+        return Meaning("Checking error", "Command not allowed / security condition not satisfied.")
 
     return Meaning("Unknown", "Status word not in current ISO 7816 quick map (may be proprietary).")
 
@@ -116,6 +112,14 @@ def parse_input(argv: list[str]) -> str:
 def main(argv: list[str]) -> int:
     try:
         raw = parse_input(argv)
+def main(argv: list[str]) -> int:
+    if len(argv) < 2:
+        print("Usage: python sw1sw2_parser.py <SW1SW2>  OR  python sw1sw2_parser.py <SW1> <SW2>")
+        return 1
+
+    raw = "".join(argv[1:3]) if len(argv) >= 3 else argv[1]
+
+    try:
         sw = normalize(raw)
         meaning = parse_status(sw)
     except ValueError as exc:
